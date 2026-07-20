@@ -1,0 +1,5 @@
+.DS_Store
+*.zip
+*.bak
+backup_manifest_*.txt
+06_powerbi_dashboard/recovered_from_parallels/
