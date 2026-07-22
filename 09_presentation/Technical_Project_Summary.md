@@ -2,314 +2,377 @@
 
 ## Project
 
-**Aurevia ERP Operations & BI Dashboard Case Study**
+**Aurevia ERP Operations & BI Dashboard**
 
 ## Summary
 
-This project is a technical and analytical case study that demonstrates how ERP operational data can be transformed into a validated Power BI dashboard.
+Aurevia ERP Operations & BI Dashboard is an end-to-end portfolio case study that demonstrates how ERP operational data can be simulated, stored in SQL Server, validated with SQL, analyzed in Power BI, and extended with Python-based customer segmentation.
 
-The project includes ERP process simulation, SQL Server database design, SQL validation, reporting view creation, Power BI dashboard development, DAX measure creation, and source-to-report reconciliation.
-
----
-
-## Technical Workflow
-
-```text
-ERP Process Simulation
-        ↓
-SQL Server Database Design
-        ↓
-SQL-Based Synthetic Data Load
-        ↓
-SQL Data Quality Validation
-        ↓
-SQL Reporting Views
-        ↓
-Power BI Dashboard Development
-        ↓
-DAX Measures
-        ↓
-Source-to-Report Reconciliation
-        ↓
-Business Insights
-```
+The project was created for a fictional professional wellness supply company named Aurevia Professional Supply.
 
 ---
 
-## ERP Layer
+## Business Domain
 
-The ERP process was simulated using Odoo.
+Aurevia sells professional spa, wellness, hammam, skincare, aromatherapy, textile, consumable, and service-related products to B2B customers.
 
-Main ERP flows:
+The reporting model focuses on:
 
-- Customer master data
-- Supplier master data
-- Product and service catalog
-- Purchase order
-- Inventory receipt
-- Sales order
-- Delivery
-- Invoice
-- Payment
-
-ERP evidence is stored under:
-
-```text
-02_erp_odoo_screenshots
-```
+- sales performance
+- product profitability
+- inventory risk
+- receivables collection
+- supplier delivery performance
+- customer portfolio prioritization
 
 ---
 
-## SQL Server Layer
+## Technology Stack
 
-The SQL Server database includes core operational tables:
-
-- Customers
-- Suppliers
-- Products
-- Warehouses
-- PurchaseOrders
-- PurchaseOrderLines
-- SalesOrders
-- SalesOrderLines
-- StockMovements
-- Invoices
-- Payments
-- DateDim
-
-SQL files are stored under:
-
-```text
-04_sql_database
-```
-
-Main SQL files:
-
-```text
-create_tables.sql
-seed_synthetic_data.sql
-powerbi_reporting_views.sql
-data_quality_validation_queries.sql
-data_quality_summary.sql
-business_analysis_queries.sql
-```
+| Layer | Technology |
+|---|---|
+| ERP Simulation | Odoo Community |
+| Database | SQL Server 2022 |
+| Data Generation | Python |
+| BI Reporting | Power BI |
+| BI Calculations | DAX |
+| Advanced Analytics | Python, pandas, scikit-learn |
+| Model Type | K-Means clustering |
+| Documentation | Markdown |
+| Version Control | Git / GitHub |
 
 ---
 
-## Data Volume
+## ERP Simulation
 
-| Table | Count |
+The ERP simulation includes:
+
+- customer master data
+- supplier master data
+- product master data
+- purchase order flow
+- stock receipt flow
+- sales order flow
+- delivery flow
+- invoice flow
+- payment flow
+
+The purpose of the ERP simulation is to show how business transactions generate the operational data used in BI reporting.
+
+---
+
+## SQL Server Database
+
+### Database
+
+```text
+AureviaERPBI
+```
+
+### Main Tables
+
+| Table | Purpose |
+|---|---|
+| Customers | Customer master data |
+| Suppliers | Supplier master data |
+| Products | Product and service master data |
+| Warehouses | Warehouse dimension |
+| PurchaseOrders | Purchase order headers |
+| PurchaseOrderLines | Purchase order line details |
+| SalesOrders | Sales order headers |
+| SalesOrderLines | Sales order line details |
+| StockMovements | Inventory movement transactions |
+| Invoices | Customer invoice records |
+| Payments | Customer payment records |
+| DateDim | Date dimension |
+
+### Row Counts
+
+| Table | Row Count |
 |---|---:|
 | Customers | 150 |
 | Suppliers | 10 |
 | Products | 82 |
 | Warehouses | 3 |
-| Purchase Orders | 800 |
-| Purchase Order Lines | 2,392 |
-| Sales Orders | 3,000 |
-| Sales Order Lines | 8,918 |
-| Stock Movements | 10,881 |
+| PurchaseOrders | 800 |
+| PurchaseOrderLines | 2,392 |
+| SalesOrders | 3,000 |
+| SalesOrderLines | 8,918 |
+| StockMovements | 10,881 |
 | Invoices | 3,000 |
 | Payments | 2,731 |
-| Date Dimension | 546 |
+| DateDim | 546 |
 
 ---
 
-## SQL Validation
+## Confirmed Project KPIs
 
-SQL validation checks included:
+| KPI | Value |
+|---|---:|
+| Total Revenue | 420.6M |
+| Gross Profit | 191.8M |
+| Gross Margin % | 45.6% |
+| Open Balance | 95.6M / 96M |
+| Collection Rate | 77.3% |
+| Products Below Reorder Level | 4 |
+| Negative Stock Products | 4 |
+| Delayed Purchase Orders | 679 |
 
-| Validation Area | Result |
+---
+
+## SQL Files
+
+| File | Purpose |
 |---|---|
-| Invalid product price | PASS |
-| Service stock movement | PASS |
-| Invalid stock movement sign | PASS |
-| Invoice mismatch | PASS |
-| Overpaid invoice | PASS |
-| Products below reorder level | 4 |
-| Negative stock products | 4 |
-| Collection rate | 77.27% |
-| Gross margin | 45.59% |
-| Delayed purchase orders | 679 |
+| `create_tables.sql` | Creates the SQL Server relational schema |
+| `seed_synthetic_data.sql` | Inserts synthetic ERP data |
+| `powerbi_reporting_views.sql` | Creates reporting views for the original Power BI dashboard |
+| `data_quality_validation_queries.sql` | Validates data quality rules |
+| `data_quality_summary.sql` | Summarizes validation results |
+| `business_analysis_queries.sql` | Provides business analysis SQL queries |
+| `advanced_analytics_reporting_queries.sql` | Adds SQL views for Page 07 and Page 08 advanced analytics |
 
 ---
 
-## SQL Reporting Views
+## Power BI Dashboard
 
-Power BI used SQL reporting views as the data source layer.
+### Final Dashboard Pages
 
-| View | Purpose |
+| Page | Page Name | Layer |
+|---|---|---|
+| 01 | Executive Overview | Operational reporting |
+| 02 | Sales Analysis | Operational reporting |
+| 03 | Product Profitability | Operational reporting |
+| 04 | Inventory Risk | Operational reporting |
+| 05 | Receivables Collection | Operational reporting |
+| 06 | Supplier Performance | Operational reporting |
+| 07 | Sales Operations Command Center | Management cockpit |
+| 08 | Customer Portfolio Action Model | Advanced analytics decision layer |
+
+---
+
+## Page 07 - Sales Operations Command Center
+
+### Purpose
+
+Page 07 is an ERP-style management cockpit.
+
+It consolidates sales, profitability, receivables, product contribution, and operational alerts into one screen.
+
+### Main Components
+
+- total revenue
+- gross profit
+- gross margin
+- open balance
+- collection rate
+- monthly revenue and gross profit trend
+- top customers by revenue
+- product category revenue ranking
+- receivables and aging risk
+- operational alerts
+- action queue
+
+### SQL Sources
+
+| SQL Object | Purpose |
 |---|---|
-| `vw_ExecutiveKPI` | Executive KPI summary |
-| `vw_MonthlySalesPerformance` | Monthly sales and profit trend |
-| `vw_CustomerSegmentPerformance` | Segment performance |
-| `vw_ProductCategoryProfitability` | Product category profitability |
-| `vw_InventoryRisk` | Stock and reorder risk |
-| `vw_ReceivablesAging` | Invoice aging and collection |
-| `vw_SupplierPerformance` | Supplier delay and purchase metrics |
-| `vw_SalesChannelPerformance` | Channel performance |
+| `vw_Page07_MonthlySalesCommandTrend` | Monthly sales and gross profit trend |
+| `vw_Page07_TopCustomersByRevenue` | Top customer ranking |
+| `vw_Page07_ProductCategoryRevenueRanking` | Product category ranking |
+| `vw_Page07_ReceivablesOpenBalanceRisk` | Receivables aging and open balance risk |
+| `vw_Page07_OperationalAlerts` | Operational alert output |
+| `vw_Page07_TopOverdueCustomerExposure` | Top overdue customer exposure |
 
 ---
 
-## Power BI Layer
+## Page 08 - Customer Portfolio Action Model
 
-The final Power BI report file is stored under:
+### Purpose
+
+Page 08 converts customer-level sales, profitability, and collection behavior into customer action groups.
+
+It answers:
 
 ```text
-06_powerbi_dashboard
+Which customer groups can support revenue growth without increasing collection
+risk and profitability risk?
 ```
 
-File:
+### Analytical Method
 
 ```text
-Aurevia_ERP_Operations_BI_Dashboard_FINAL_RECOVERED.pbix
+Python K-Means customer segmentation
 ```
 
-Dashboard pages:
+### Model Features
 
-1. Executive Overview
-2. Sales Analysis
-3. Product Profitability
-4. Inventory Risk
-5. Receivables Collection
-6. Supplier Performance
+| Feature | Meaning |
+|---|---|
+| TotalRevenue | Customer revenue contribution |
+| GrossMarginPercent | Profitability quality |
+| AvgMonthlyOrderFrequency | Order regularity |
+| CollectionRate | Payment quality |
+| OpenBalanceRatio | Receivables exposure relative to revenue |
+| ProductCategoryDiversity | Product basket diversity |
+
+### Customer Clusters
+
+| Cluster | Action |
+|---|---|
+| Strategic Value Customers | Protect / Retain / Upsell |
+| Growth Potential Customers | Grow / Cross-sell |
+| Collection Risk Customers | Collect First / Monitor Credit |
+| Low Contribution Customers | Low-Touch Service |
+
+### SQL and Python Sources
+
+| Object / File | Purpose |
+|---|---|
+| `vw_Page08_CustomerSegmentationInput` | SQL feature input for Python |
+| `customer_segmentation_kmeans.py` | Python K-Means segmentation script |
+| `dbo.CustomerSegmentationOutput` | SQL writeback table for segmentation output |
+| `vw_Page08_CustomerClusterProfile` | Segment profile for Power BI |
+| `vw_Page08_CustomerPriorityList` | Customer priority output |
+| `vw_Page08_ChannelClusterMatrix` | Channel and cluster matrix |
+| `vw_Page08_ActionOutputSummary` | Action card output |
 
 ---
 
-## DAX Measures
+## Advanced Analytics Python Layer
 
-Key DAX measures included:
+### Folder
 
-- Total Revenue
-- Gross Profit
-- Gross Margin %
-- Receivables Collection Rate %
-- Products Monitored
-- Products Below Reorder Level
-- Negative Stock Products
-- Total Reorder Shortage
-- Supplier Delay Rate %
-- Average Delay Days
+```text
+05_synthetic_data/advanced_analytics
+```
 
-Detailed DAX documentation is stored under:
+### Files
+
+| File | Purpose |
+|---|---|
+| `customer_segmentation_kmeans.py` | Creates customer segmentation output |
+| `sales_reporting_automation.py` | Exports SQL reporting outputs into Excel |
+| `requirements.txt` | Python dependency list |
+| `README_advanced_analytics.md` | Advanced analytics documentation |
+
+### Outputs
+
+| Output | Purpose |
+|---|---|
+| `customer_segments.csv` | Customer-level segmentation output |
+| `customer_cluster_profile.csv` | Cluster-level KPI summary |
+| `sales_priority_actions.csv` | Management action output |
+| `model_run_log.csv` | Model execution metadata |
+
+---
+
+## Advanced Analytics Flow
+
+```text
+SQL Server reporting views
+        ↓
+Customer-level feature dataset
+        ↓
+Python data preparation
+        ↓
+StandardScaler
+        ↓
+K-Means clustering with K=4
+        ↓
+Business-readable cluster labels
+        ↓
+Customer priority score
+        ↓
+CSV output and optional SQL writeback
+        ↓
+Power BI Customer Portfolio Action Model
+```
+
+---
+
+## DAX Documentation
+
+DAX measures are documented in:
 
 ```text
 06_powerbi_dashboard/powerbi_technical_documentation/DAX_Measure_Catalog.md
 ```
 
----
+Advanced DAX measure areas include:
 
-## Power BI Validation
-
-Power BI validation focused on:
-
-- Correct SQL view usage
-- Correct aggregation behavior
-- DAX measure accuracy
-- KPI reconciliation
-- Visual-level business relevance
-- Table readability
-- Final screenshot quality
-
-Key reconciled values:
-
-| KPI | Final Value |
-|---|---:|
-| Total Revenue | 420.6M |
-| Gross Profit | 191.8M |
-| Gross Margin % | 45.6% |
-| Collection Rate % | 77.3% |
-| Open Balance | 95.6M |
-| Products Below Reorder Level | 4 |
-| Negative Stock Products | 4 |
-| Delayed Purchase Orders | 679 |
-| Supplier Delay Rate % | 84.9% |
+- total revenue
+- gross profit
+- gross margin percentage
+- open balance
+- collection rate
+- operational alert values
+- segment revenue
+- segment revenue share
+- segment open balance share
+- strategic value revenue
+- collection risk exposure
+- customer priority rank
+- channel revenue share
 
 ---
 
-## QA Documentation
+## QA and UAT Documentation
 
-QA documentation is stored under:
+QA and UAT files are stored in:
 
 ```text
 07_uat_go_live_docs
 ```
 
-Included files:
+Key files:
 
-```text
-QA_Test_Strategy.md
-SQL_Data_Quality_Test_Cases.md
-PowerBI_Reconciliation_Test_Cases.md
-UAT_Go_Live_Checklist.md
-```
-
-QA focus areas:
-
-- SQL data load validation
-- SQL data quality checks
-- SQL reporting view validation
-- Power BI source-to-report reconciliation
-- UAT readiness review
-
----
-
-## Issue & Change Tracking
-
-Issue and change request documentation is stored under:
-
-```text
-08_issue_request_log
-```
-
-Included files:
-
-```text
-Issue_Log.md
-Change_Request_Log.md
-```
-
-Tracked areas:
-
-- Environment recovery
-- PBIX recovery
-- SQL backup packaging
-- Power BI aggregation issues
-- KPI naming corrections
-- Visual replacement decisions
-- Documentation accuracy corrections
-
----
-
-## Final Deliverables
-
-| Deliverable | Location |
+| File | Purpose |
 |---|---|
-| ERP screenshots | `02_erp_odoo_screenshots` |
-| SQL scripts | `04_sql_database` |
-| SQL backup | `04_sql_database/backups` |
-| Power BI file | `06_powerbi_dashboard` |
-| Dashboard screenshots | `06_powerbi_dashboard/power bi ekran görüntüleri` |
-| Power BI technical documentation | `06_powerbi_dashboard/powerbi_technical_documentation` |
-| QA documentation | `07_uat_go_live_docs` |
-| Issue and change logs | `08_issue_request_log` |
-| README case study | Project root |
+| `QA_Test_Strategy.md` | General testing strategy |
+| `SQL_Data_Quality_Test_Cases.md` | SQL data quality tests |
+| `PowerBI_Reconciliation_Test_Cases.md` | Power BI reconciliation checks |
+| `UAT_Go_Live_Checklist.md` | Go-live style checklist |
+| `Advanced_Analytics_QA_Test_Cases.md` | Advanced SQL, Python, and Power BI validation tests |
 
 ---
 
-## Technical Skills Demonstrated
+## Technical Documentation
+
+Power BI and advanced analytics documentation is stored in:
+
+```text
+06_powerbi_dashboard/powerbi_technical_documentation
+```
+
+Key files:
+
+| File | Purpose |
+|---|---|
+| `DAX_Measure_Catalog.md` | DAX measure definitions |
+| `PowerBI_Report_Build_Log.md` | Report build notes |
+| `PowerBI_Page_Blueprint.md` | Page structure documentation |
+| `SQL_View_to_Dashboard_Mapping.md` | SQL view and dashboard mapping |
+| `PowerBI_Field_Aggregation_Notes.md` | Aggregation and field usage notes |
+| `Advanced_Analytics_Model_Documentation.md` | SQL + Python + K-Means model documentation |
+| `PowerBI_Advanced_Page_Build_Notes.md` | Page 07 and Page 08 Power BI build logic |
+
+---
+
+## Final Technical Positioning
 
 This project demonstrates:
 
 - ERP process understanding
-- SQL Server database design
-- SQL scripting
-- SQL-based synthetic data creation
-- Data quality validation
-- Reporting view creation
+- SQL Server schema design
+- synthetic transactional data generation
+- SQL validation
 - Power BI dashboard development
-- DAX measure creation
-- KPI reconciliation
-- BI testing and QA documentation
-- Business insight communication
-- Project packaging and documentation
+- DAX measure documentation
+- Python-based customer segmentation
+- customer priority scoring
+- automated reporting output
+- QA / UAT documentation
+- business decision support
+
+The final result is a portfolio-ready case study that connects ERP operations, data engineering, business intelligence, and applied analytics.

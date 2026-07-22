@@ -129,6 +129,7 @@ SQL files are stored under:
 | `data_quality_validation_queries.sql` | Contains SQL validation queries |
 | `data_quality_summary.sql` | Summarizes validation outputs |
 | `business_analysis_queries.sql` | Contains analytical SQL queries |
+| `backups/AureviaERPBI_backup.bak` | SQL Server database backup |
 
 Recommended SQL review order:
 
@@ -218,7 +219,7 @@ Aurevia_ERP_Operations_BI_Dashboard_FINAL_RECOVERED.pbix
 Dashboard screenshots:
 
 ```text
-06_powerbi_dashboard/power_bi_ekran_goruntuleri
+06_powerbi_dashboard/power bi ekran görüntüleri
 ```
 
 Dashboard pages:
@@ -444,12 +445,15 @@ aurevia-erp-operations-bi-case-study
 │   ├── data_quality_validation_queries.sql
 │   ├── data_quality_summary.sql
 │   ├── business_analysis_queries.sql
+│   └── backups
+│       └── AureviaERPBI_backup.bak
 │
 ├── 05_synthetic_data
 │
 ├── 06_powerbi_dashboard
 │   ├── Aurevia_ERP_Operations_BI_Dashboard_FINAL_RECOVERED.pbix
-│   ├── power_bi_ekran_goruntuleri
+│   ├── power bi ekran görüntüleri
+│   ├── recovered_from_parallels
 │   └── powerbi_technical_documentation
 │       ├── DAX_Measure_Catalog.md
 │       ├── PowerBI_Report_Build_Log.md
@@ -489,7 +493,7 @@ Recommended review order:
 5. 04_sql_database/powerbi_reporting_views.sql
 6. 06_powerbi_dashboard/powerbi_technical_documentation/DAX_Measure_Catalog.md
 7. 07_uat_go_live_docs/PowerBI_Reconciliation_Test_Cases.md
-8. 06_powerbi_dashboard/power_bi_ekran_goruntuleri
+8. 06_powerbi_dashboard/power bi ekran görüntüleri
 ```
 
 ---
@@ -521,3 +525,322 @@ This project uses fictional company data and synthetic ERP transactions.
 No real customer, supplier, financial, or company data is included.
 
 The project was created as a professional portfolio case study.
+
+
+---
+
+# Advanced Analytics Extension
+
+## Overview
+
+After the original 6-page operational Power BI dashboard was completed, the project was extended with an advanced analytics layer to demonstrate how ERP reporting can be combined with SQL, Python, Power BI, and DAX for management-level decision support.
+
+The extension adds two additional Power BI pages:
+
+| Page | Page Name | Purpose |
+|---|---|---|
+| 07 | Sales Operations Command Center | ERP-style management cockpit for sales, profitability, receivables, customer value, product category contribution, and operational alerts |
+| 08 | Customer Portfolio Action Model | Python K-Means based customer segmentation model for revenue growth, collection risk, and customer action prioritization |
+
+The advanced layer does not add unnecessary dashboard pages. It adds a focused decision layer on top of the existing ERP reporting model.
+
+---
+
+## Advanced Business Problem
+
+The advanced analytics extension addresses the following management question:
+
+```text
+Which customer groups in the Aurevia portfolio can support revenue growth
+without increasing collection risk and profitability risk?
+```
+
+This requires more than static operational reporting.
+
+The solution combines:
+
+```text
+SQL Server ERP data
+        ↓
+SQL reporting views
+        ↓
+Python feature engineering
+        ↓
+K-Means customer segmentation
+        ↓
+Customer segment output tables
+        ↓
+Power BI decision pages
+        ↓
+Sales and collection action outputs
+```
+
+---
+
+## Advanced Analytics Architecture
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| ERP / Transaction Layer | Odoo ERP simulation and SQL Server tables | Source operational business data |
+| Reporting Layer | SQL Server views | Prepare Power BI-ready reporting outputs |
+| Analytics Layer | Python, pandas, scikit-learn | Create customer-level segmentation and action outputs |
+| BI Layer | Power BI and DAX | Build management-facing decision dashboards |
+| QA Layer | SQL, Python, and Power BI validation checks | Reconcile advanced analytics outputs to confirmed project totals |
+
+---
+
+## Added Power BI Pages
+
+### 07 - Sales Operations Command Center
+
+This page is designed as a management cockpit.
+
+It provides a single-screen view of:
+
+- total revenue
+- gross profit
+- gross margin
+- open balance
+- collection rate
+- monthly revenue and gross profit trend
+- top customers by revenue
+- product category revenue ranking
+- receivables / open balance risk
+- operational alerts
+- action queue
+
+Business purpose:
+
+```text
+Give management one operational screen to monitor sales performance,
+profitability, customer value, receivables risk, and operational exceptions.
+```
+
+---
+
+### 08 - Customer Portfolio Action Model
+
+This page converts Python K-Means customer segmentation output into business actions.
+
+It includes:
+
+- cluster profile heatmap
+- customer priority list
+- channel x customer segment matrix
+- portfolio risk and growth summary
+- action output cards
+
+Customer clusters:
+
+| Cluster | Business Meaning | Recommended Action |
+|---|---|---|
+| Strategic Value Customers | High revenue, strong margin, good collection quality | Protect / Retain / Upsell |
+| Growth Potential Customers | Healthy profile with room for expansion | Grow / Cross-sell |
+| Collection Risk Customers | Revenue exists but collection and open balance risk are high | Collect First / Monitor Credit |
+| Low Contribution Customers | Low revenue contribution and lower strategic priority | Low-Touch Service |
+
+Business purpose:
+
+```text
+Help sales and finance teams decide which customers to protect, grow,
+monitor, or manage with a lower-touch service model.
+```
+
+---
+
+## Python Advanced Analytics Layer
+
+Python scripts were added under:
+
+```text
+05_synthetic_data/advanced_analytics
+```
+
+Files:
+
+| File | Purpose |
+|---|---|
+| `customer_segmentation_kmeans.py` | Builds the K-Means customer segmentation model |
+| `sales_reporting_automation.py` | Exports SQL reporting outputs into an Excel-based management report |
+| `requirements.txt` | Python dependency list |
+| `README_advanced_analytics.md` | Documents the advanced analytics extension |
+
+Output folder:
+
+```text
+05_synthetic_data/advanced_analytics/outputs
+```
+
+Expected outputs:
+
+| Output | Purpose |
+|---|---|
+| `customer_segments.csv` | Customer-level segmentation output |
+| `customer_cluster_profile.csv` | Cluster-level profile output |
+| `sales_priority_actions.csv` | Action card output |
+| `model_run_log.csv` | Model execution metadata |
+
+---
+
+## Python Libraries Used
+
+| Library | Usage |
+|---|---|
+| pandas | Data loading, cleaning, feature preparation, and CSV output |
+| numpy | Numeric calculations |
+| scikit-learn | K-Means customer segmentation |
+| StandardScaler | Feature scaling before clustering |
+| KMeans | Customer grouping |
+| silhouette_score | Technical model validation metric |
+| SQLAlchemy | SQL Server connection layer |
+| pyodbc | SQL Server driver integration |
+| joblib | Model and scaler persistence |
+| openpyxl | Excel reporting output |
+| pathlib | File path handling |
+| logging | Pipeline execution traceability |
+
+---
+
+## Customer Segmentation Features
+
+The K-Means model uses customer-level commercial, profitability, collection, and behavioral features.
+
+| Feature | Business Meaning |
+|---|---|
+| `TotalRevenue` | Customer revenue contribution |
+| `GrossMarginPercent` | Profitability quality |
+| `AvgMonthlyOrderFrequency` | Order regularity |
+| `CollectionRate` | Payment / collection quality |
+| `OpenBalanceRatio` | Receivables exposure relative to revenue |
+| `ProductCategoryDiversity` | Product basket diversity |
+
+The model uses `K=4` because the business action model requires four practical customer groups:
+
+```text
+Strategic Value
+Growth Potential
+Collection Risk
+Low Contribution
+```
+
+---
+
+## Added SQL Reporting Objects
+
+Advanced analytics SQL file:
+
+```text
+04_sql_database/advanced_analytics_reporting_queries.sql
+```
+
+Main SQL objects added:
+
+| SQL Object | Purpose |
+|---|---|
+| `vw_Page07_MonthlySalesCommandTrend` | Monthly revenue and gross profit trend |
+| `vw_Page07_TopCustomersByRevenue` | Top customer ranking |
+| `vw_Page07_ProductCategoryRevenueRanking` | Product category revenue ranking |
+| `vw_Page07_ReceivablesOpenBalanceRisk` | Receivables and aging risk summary |
+| `vw_Page07_OperationalAlerts` | Operational alerts |
+| `vw_Page07_TopOverdueCustomerExposure` | Top overdue customer exposure |
+| `vw_Page08_CustomerSegmentationInput` | Python K-Means input dataset |
+| `dbo.CustomerSegmentationOutput` | SQL target table for Python segmentation output |
+| `vw_Page08_CustomerClusterProfile` | Cluster profile for Power BI |
+| `vw_Page08_CustomerPriorityList` | Customer action priority list |
+| `vw_Page08_ChannelClusterMatrix` | Channel x customer cluster matrix |
+| `vw_Page08_ActionOutputSummary` | Management action output |
+
+---
+
+## Advanced Analytics Validation
+
+Advanced QA documentation was added under:
+
+```text
+07_uat_go_live_docs/Advanced_Analytics_QA_Test_Cases.md
+```
+
+The validation layer checks:
+
+- SQL view existence
+- reporting period consistency
+- customer-level input completeness
+- customer count reconciliation
+- total revenue reconciliation
+- open balance reconciliation
+- Python output row count
+- Python output cluster count
+- Power BI screenshot existence
+- Page 07 and Page 08 visual content alignment
+- DAX catalog update
+- technical documentation completeness
+
+Expected control totals:
+
+| Metric | Expected Value |
+|---|---:|
+| Customer Count | 150 |
+| Segment Count | 4 |
+| Total Revenue | 420.6M |
+| Gross Profit | 191.8M |
+| Gross Margin % | 45.6% |
+| Open Balance | 95.6M / 96M |
+| Collection Rate | 77.3% |
+
+---
+
+## Advanced Power BI Documentation
+
+Additional Power BI documentation was added under:
+
+```text
+06_powerbi_dashboard/powerbi_technical_documentation
+```
+
+Files:
+
+| File | Purpose |
+|---|---|
+| `Advanced_Analytics_Model_Documentation.md` | Documents SQL, Python, segmentation, and model logic |
+| `PowerBI_Advanced_Page_Build_Notes.md` | Documents Page 07 and Page 08 build logic |
+| `DAX_Measure_Catalog.md` | Updated with advanced analytics DAX measures |
+
+---
+
+## Dashboard Scope After Extension
+
+The final Power BI dashboard structure is:
+
+| Page | Page Name |
+|---|---|
+| 01 | Executive Overview |
+| 02 | Sales Analysis |
+| 03 | Product Profitability |
+| 04 | Inventory Risk |
+| 05 | Receivables Collection |
+| 06 | Supplier Performance |
+| 07 | Sales Operations Command Center |
+| 08 | Customer Portfolio Action Model |
+
+The first six pages represent the operational reporting layer.
+
+The last two pages represent the advanced management and customer portfolio decision layer.
+
+---
+
+## Final Positioning
+
+This project demonstrates an end-to-end ERP operations and BI workflow:
+
+- ERP process simulation
+- relational SQL Server data modeling
+- synthetic business data generation
+- SQL validation and reporting views
+- Power BI dashboard development
+- DAX measure documentation
+- Python-based customer segmentation
+- automated reporting output
+- QA and UAT documentation
+- management-facing decision support
+
+The result is a portfolio case study that connects business operations, data engineering, business intelligence, and applied analytics.

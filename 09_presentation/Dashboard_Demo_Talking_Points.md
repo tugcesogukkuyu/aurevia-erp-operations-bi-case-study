@@ -2,213 +2,358 @@
 
 ## Project
 
-**Aurevia ERP Operations & BI Dashboard Case Study**
+**Aurevia ERP Operations & BI Dashboard**
 
 ## Purpose
 
-This document provides short talking points for presenting the Power BI dashboard during an interview, portfolio review, or project walkthrough.
+This document provides a structured talking track for presenting the Aurevia ERP Operations & BI Dashboard during a portfolio review, interview, or technical discussion.
+
+The goal is to explain the project from a business and technical perspective without presenting it as only a visual dashboard.
 
 ---
 
 ## Opening Summary
 
-This project simulates an ERP-based reporting scenario for a fictional wellness and professional supply company.
+This project is an end-to-end ERP operations and business intelligence case study built for a fictional professional wellness supply company named Aurevia Professional Supply.
 
-I first modeled the ERP business process, then created a SQL Server database, loaded synthetic ERP transaction data, validated the data with SQL, created reporting views, and finally built a 6-page Power BI dashboard.
-
-The dashboard focuses on sales, product profitability, inventory risk, receivables collection, and supplier performance.
+The project simulates a realistic business environment where ERP transactions are created, stored in SQL Server, validated with SQL, analyzed in Power BI, and extended with Python-based customer segmentation.
 
 ---
 
-## Page 1 — Executive Overview
+## 1. Business Context
 
-### How to Present
+### Talking Point
 
-This is the management summary page.
+Aurevia sells professional spa, wellness, hammam, skincare, aromatherapy, textile, and service-related products to B2B customers.
 
-It combines financial KPIs and operational risk indicators in one view.
+The business needs visibility across sales, profitability, inventory, receivables, and supplier performance.
 
-### Points to Mention
+### Key Message
 
-- Total revenue is around 420.6M.
-- Gross margin is around 45.6%.
-- Collection rate is around 77.3%.
-- Open receivables balance is around 95.6M.
-- Inventory and supplier risk indicators are also included.
-- This page is designed for a quick executive-level review.
-
-### Strong Sentence
-
-The goal of this page is not only to show revenue, but also to connect financial performance with operational risks such as inventory shortages and supplier delays.
+The dashboard was not designed only to show charts. It was designed to simulate how an operations and BI team would monitor business performance from ERP data.
 
 ---
 
-## Page 2 — Sales Analysis
+## 2. ERP Process Flow
 
-### How to Present
+### Talking Point
 
-This page focuses on sales performance by time, channel, and customer segment.
+Before creating the dashboard, I simulated the ERP process flow.
 
-### Points to Mention
+The ERP flow includes:
 
-- Monthly revenue and gross profit are shown together.
-- Sales channel analysis helps compare channel contribution.
-- Customer segment analysis shows which segments generate stronger revenue and profit.
-- Duplicate visuals were avoided to keep the page focused.
+- customers
+- suppliers
+- products
+- purchase orders
+- stock receipts
+- sales orders
+- deliveries
+- invoices
+- payments
 
-### Strong Sentence
+### Key Message
 
-I designed this page to answer where the revenue comes from and which customer or channel groups contribute most to profitability.
-
----
-
-## Page 3 — Product Profitability
-
-### How to Present
-
-This page analyzes product category performance.
-
-### Points to Mention
-
-- Category-level gross profit and margin are shown together.
-- A treemap shows profit contribution by category.
-- The detail table allows a more operational review of revenue, profit, margin, quantity, and product count.
-- Margin percentages were not summed; aggregation was controlled.
-
-### Strong Sentence
-
-This page separates high-volume profit contribution from percentage margin performance, which is important for commercial decision-making.
+This allowed the project to start from business operations instead of starting directly from visuals.
 
 ---
 
-## Page 4 — Inventory Risk
+## 3. SQL Server Data Model
 
-### How to Present
+### Talking Point
 
-This page identifies products that require stock follow-up.
+The operational data was stored in SQL Server using a relational structure.
 
-### Points to Mention
+The model includes customer, supplier, product, warehouse, purchase, sales, stock, invoice, payment, and date dimension tables.
 
-- 78 products are monitored.
-- 4 products are below reorder level.
-- 4 products have negative stock risk.
-- Total reorder shortage was validated as 1,855.
-- The action table focuses on products that require operational attention.
+### Key Numbers
 
-### Strong Sentence
+| Area | Volume |
+|---|---:|
+| Customers | 150 |
+| Products | 82 |
+| Sales Orders | 3,000 |
+| Sales Order Lines | 8,918 |
+| Purchase Orders | 800 |
+| Stock Movements | 10,881 |
+| Invoices | 3,000 |
+| Payments | 2,731 |
 
-This page is designed as an operational risk screen, not just a stock summary.
+### Key Message
 
----
-
-## Page 5 — Receivables Collection
-
-### How to Present
-
-This page focuses on invoice collection and aging risk.
-
-### Points to Mention
-
-- Total invoice amount, paid amount, open balance, and collection rate are shown.
-- Collection rate is around 77.3%.
-- Open balance is around 95.6M.
-- Aging bucket analysis helps prioritize collection follow-up.
-- Customer-level receivables were not used because the source view was aging-bucket based.
-
-### Strong Sentence
-
-This page helps finance teams understand not only how much is open, but also where the collection workload is concentrated by aging bucket.
+The dataset was large enough to support realistic reporting patterns and operational analysis.
 
 ---
 
-## Page 6 — Supplier Performance
+## 4. Data Quality Validation
 
-### How to Present
+### Talking Point
 
-This page analyzes supplier purchasing volume and delay performance.
+I added SQL validation checks before building the Power BI report.
 
-### Points to Mention
+These checks covered:
 
-- Total purchase amount is around 333.5M.
-- 800 purchase orders were analyzed.
-- 679 purchase orders were delayed.
-- Supplier delay rate is around 84.9%.
-- A supplier action table was used instead of a complex visual because it supports follow-up better.
+- invalid product prices
+- invoice mismatches
+- overpaid invoices
+- incorrect stock movement signs
+- service products incorrectly affecting stock
+- inventory risk
+- receivables risk
+- supplier delivery delay
 
-### Strong Sentence
+### Key Message
 
-This page turns supplier delay data into an actionable follow-up list for purchasing and operations teams.
-
----
-
-## DAX & Measure Talking Points
-
-### Measures Created
-
-- Gross Margin %
-- Receivables Collection Rate %
-- Supplier Delay Rate %
-- Products Monitored
-- Products Below Reorder Level
-- Negative Stock Products
-- Total Reorder Shortage
-- Total Reorder Shortage Label
-
-### Strong Sentence
-
-I used DAX measures for ratio-based KPIs and filtered calculations because raw field aggregation would not be sufficient for accurate business reporting.
+This step shows that the dashboard is based on controlled and validated reporting logic, not just raw synthetic data.
 
 ---
 
-## SQL Talking Points
+## 5. Original Dashboard Pages
 
-### SQL Work Completed
+### Talking Point
 
-- Created SQL Server database tables
-- Loaded synthetic ERP data through SQL scripts
-- Created reporting views for Power BI
-- Wrote validation queries
-- Checked business rule consistency
-- Created SQL backup file
+The first version of the dashboard included six operational pages.
 
-### Strong Sentence
+| Page | Purpose |
+|---|---|
+| Executive Overview | High-level performance summary |
+| Sales Analysis | Revenue, channel, region, and customer performance |
+| Product Profitability | Category and product-level margin analysis |
+| Inventory Risk | Stock availability and reorder risk |
+| Receivables Collection | Invoice, payment, and overdue balance tracking |
+| Supplier Performance | Purchase order and supplier delay monitoring |
 
-Power BI was not built directly on raw assumptions; it was built on SQL reporting views and validated business logic.
+### Key Message
 
----
-
-## QA Talking Points
-
-### QA Work Completed
-
-- SQL data quality validation
-- KPI reconciliation
-- Source-to-report validation
-- Aggregation behavior review
-- Visual usability review
-- Final screenshot and packaging control
-
-### Strong Sentence
-
-The dashboard values were checked against SQL source outputs, so the report is not only visually complete but also technically validated.
+These six pages form the operational reporting layer of the project.
 
 ---
 
-## Closing Summary
+## 6. Why I Added an Advanced Analytics Layer
 
-This project demonstrates an end-to-end BI workflow:
+### Talking Point
+
+After completing the operational dashboard, I extended the project because a real management dashboard should not only show what happened. It should also help decide what to do next.
+
+The advanced extension focuses on two management needs:
+
+1. monitoring sales operations from one command center
+2. prioritizing customers for growth, retention, or collection actions
+
+### Key Message
+
+The advanced extension was intentionally limited to two pages. The goal was not to add more visuals, but to add a clear decision layer.
+
+---
+
+## 7. Page 07 - Sales Operations Command Center
+
+### Talking Point
+
+This page acts as an ERP-style management cockpit.
+
+It brings together:
+
+- total revenue
+- gross profit
+- gross margin
+- open balance
+- collection rate
+- monthly sales trend
+- top customers
+- product category revenue
+- receivables risk
+- operational alerts
+
+### How to Explain the Page
+
+This page answers:
 
 ```text
-ERP process simulation
-→ SQL Server database
-→ SQL validation
-→ SQL reporting views
-→ Power BI dashboard
-→ DAX measures
-→ Source-to-report reconciliation
-→ Business insights
+What is happening in sales operations right now, and which issues require
+management attention?
 ```
 
-### Final Sentence
+### Key Message
 
-The main value of this project is that it connects business process understanding with SQL, Power BI, DAX, QA validation, and executive reporting.
+The page gives a single management view of commercial performance, profitability, receivables, and operational exceptions.
+
+---
+
+## 8. Page 08 - Customer Portfolio Action Model
+
+### Talking Point
+
+This page uses Python-based K-Means segmentation to convert customer performance data into business action groups.
+
+The business question is:
+
+```text
+Which customer groups can support revenue growth without increasing collection
+risk and profitability risk?
+```
+
+### Model Features
+
+The segmentation uses:
+
+- total revenue
+- gross margin percentage
+- average monthly order frequency
+- collection rate
+- open balance ratio
+- product category diversity
+
+### Customer Clusters
+
+| Cluster | Recommended Action |
+|---|---|
+| Strategic Value Customers | Protect / Retain / Upsell |
+| Growth Potential Customers | Grow / Cross-sell |
+| Collection Risk Customers | Collect First / Monitor Credit |
+| Low Contribution Customers | Low-Touch Service |
+
+### Key Message
+
+This page connects sales growth with finance risk, so the business does not increase revenue exposure with customers who already show collection problems.
+
+---
+
+## 9. SQL + Python + Power BI Integration
+
+### Talking Point
+
+The advanced analytics flow is designed as follows:
+
+```text
+SQL Server reporting views
+        ↓
+Python feature engineering
+        ↓
+K-Means segmentation
+        ↓
+Customer segmentation output
+        ↓
+Power BI customer action page
+```
+
+### Key Message
+
+SQL prepares the reporting layer, Python creates the segmentation model, and Power BI turns the model output into management actions.
+
+---
+
+## 10. DAX and Power BI Build Logic
+
+### Talking Point
+
+I documented the DAX measures and Power BI page build logic separately.
+
+This includes:
+
+- revenue measures
+- gross profit measures
+- gross margin percentage
+- open balance
+- collection rate
+- segment revenue share
+- segment open balance share
+- customer priority rank
+- channel revenue share
+
+### Key Message
+
+The documentation shows not only the final dashboard, but also how the report logic would be built and maintained.
+
+---
+
+## 11. QA and Reconciliation
+
+### Talking Point
+
+I also added QA and UAT documentation for the advanced analytics layer.
+
+The QA checks cover:
+
+- SQL view existence
+- reporting period consistency
+- customer count reconciliation
+- total revenue reconciliation
+- open balance reconciliation
+- Python output validation
+- cluster count validation
+- Power BI screenshot checks
+
+### Key Message
+
+This makes the project more realistic because BI projects require reconciliation and validation, not only dashboard design.
+
+---
+
+## 12. How to Position the Project in an Interview
+
+### Main Positioning Sentence
+
+```text
+This is an end-to-end ERP operations and BI case study where I simulated business
+transactions, modeled them in SQL Server, validated the data with SQL, built a
+Power BI reporting layer, and extended it with Python-based customer segmentation
+for management decision support.
+```
+
+### Technical Positioning
+
+```text
+The project combines SQL Server, Power BI, DAX, Python, and applied customer
+analytics in a single portfolio case study.
+```
+
+### Business Positioning
+
+```text
+The dashboard helps management monitor operational performance and prioritize
+customer actions based on revenue, margin, collection quality, and receivables
+risk.
+```
+
+---
+
+## 13. What to Emphasize
+
+### Emphasize
+
+- the project starts from business process logic
+- SQL validation was included
+- Power BI pages have clear business purposes
+- Python was added for a specific decision problem
+- advanced analytics is not shown as academic ML
+- customer segmentation is translated into business actions
+- QA and documentation were included
+
+### Do Not Overclaim
+
+Do not claim that the advanced screenshots are direct PBIX exports unless the PBIX file is rebuilt with the same advanced analytics outputs.
+
+A safer statement is:
+
+```text
+The advanced pages are portfolio dashboard mockups supported by documented SQL,
+Python, Power BI, and QA implementation logic.
+```
+
+---
+
+## 14. Closing Statement
+
+This project demonstrates how an ERP reporting solution can evolve from operational dashboards into a management decision-support system.
+
+It connects:
+
+- business process understanding
+- SQL data modeling
+- data quality validation
+- Power BI reporting
+- DAX calculations
+- Python segmentation
+- QA documentation
+- business action design
