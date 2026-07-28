@@ -1,0 +1,358 @@
+{
+    "info": {
+      "_postman_id": "6f865645-7269-4c31-a9f8-aurevia-erp-api",
+      "name": "Aurevia ERP Control API",
+      "description": "Postman collection for validating sales order and goods receipt business controls in the Aurevia ERP Operations and BI case study.",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000",
+        "type": "string"
+      }
+    ],
+    "item": [
+      {
+        "name": "Health Check",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "{{baseUrl}}/health",
+            "host": [
+              "{{baseUrl}}"
+            ],
+            "path": [
+              "health"
+            ]
+          }
+        },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Health check returns 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('API and database are available', function () {",
+                "    const response = pm.response.json();",
+                "    pm.expect(response.status).to.eql('ok');",
+                "    pm.expect(response.database.connected).to.eql(true);",
+                "    pm.expect(response.database.name).to.eql('AureviaERPBI');",
+                "});"
+              ],
+              "type": "text/javascript"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Sales Order Validation",
+        "item": [
+          {
+            "name": "TC-API-SO-001 - Approved Sales Order",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-SALESMGR-01\",\n  \"customerCode\": \"CUST-002\",\n  \"productCode\": \"PRD-001\",\n  \"batchNumber\": \"BATCH-REL-001\",\n  \"warehouseCode\": \"WH-001\",\n  \"requestedQuantity\": 100,\n  \"orderAmount\": 50000,\n  \"financeApprovalStatus\": \"NOT_REQUIRED\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/sales-orders/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "sales-orders",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Request returns 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test('Sales order is approved', function () {",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.status).to.eql('success');",
+                    "    pm.expect(response.data.validationStatus).to.eql('APPROVED');",
+                    "    pm.expect(response.data.totals.failedChecks).to.eql(0);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TC-API-SO-002 - Unauthorized User Rejected",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-SALES-01\",\n  \"customerCode\": \"CUST-002\",\n  \"productCode\": \"PRD-001\",\n  \"batchNumber\": \"BATCH-REL-001\",\n  \"warehouseCode\": \"WH-001\",\n  \"requestedQuantity\": 100,\n  \"orderAmount\": 50000,\n  \"financeApprovalStatus\": \"NOT_REQUIRED\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/sales-orders/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "sales-orders",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Request returns 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test('Unauthorized approval is rejected', function () {",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.validationStatus).to.eql('REJECTED');",
+                    "",
+                    "    const failedCheck = response.data.checks.find(",
+                    "        check => check.code === 'APPROVAL_ROLE'",
+                    "    );",
+                    "",
+                    "    pm.expect(failedCheck.status).to.eql('FAIL');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TC-API-SO-003 - Pending Finance Approval",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-SALESMGR-01\",\n  \"customerCode\": \"CUST-001\",\n  \"productCode\": \"PRD-001\",\n  \"batchNumber\": \"BATCH-REL-001\",\n  \"warehouseCode\": \"WH-001\",\n  \"requestedQuantity\": 100,\n  \"orderAmount\": 20000,\n  \"financeApprovalStatus\": \"PENDING\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/sales-orders/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "sales-orders",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Credit exception waits for finance approval', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.validationStatus)",
+                    "        .to.eql('PENDING_FINANCE_APPROVAL');",
+                    "    pm.expect(response.data.approval.requiresFinanceApproval)",
+                    "        .to.eql(true);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Goods Receipt Validation",
+        "item": [
+          {
+            "name": "TC-API-GR-001 - Approved Goods Receipt",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-WH-01\",\n  \"purchaseOrderCode\": \"PO-UAT-000001\",\n  \"productCode\": \"PRD-010\",\n  \"warehouseCode\": \"WH-001\",\n  \"batchNumber\": \"BATCH-GR-001\",\n  \"deliveredQuantity\": 1000,\n  \"acceptedQuantity\": 850,\n  \"rejectedQuantity\": 50,\n  \"damagedQuantity\": 20,\n  \"qualityBlockedQuantity\": 80,\n  \"allowedVariancePercentage\": 5,\n  \"varianceReasonCode\": null,\n  \"exceptionApprovalStatus\": \"NOT_REQUIRED\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/goods-receipts/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "goods-receipts",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Goods receipt is approved', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.validationStatus).to.eql('APPROVED');",
+                    "    pm.expect(response.data.totals.failedChecks).to.eql(0);",
+                    "});",
+                    "",
+                    "pm.test('Quality-blocked stock remains separated', function () {",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.quantities.acceptedQuantity).to.eql(850);",
+                    "    pm.expect(response.data.quantities.qualityBlockedQuantity).to.eql(80);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TC-API-GR-002 - Pending Exception Approval",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-WH-01\",\n  \"purchaseOrderCode\": \"PO-UAT-000001\",\n  \"productCode\": \"PRD-010\",\n  \"warehouseCode\": \"WH-001\",\n  \"batchNumber\": \"BATCH-GR-001\",\n  \"deliveredQuantity\": 1100,\n  \"acceptedQuantity\": 1100,\n  \"rejectedQuantity\": 0,\n  \"damagedQuantity\": 0,\n  \"qualityBlockedQuantity\": 0,\n  \"allowedVariancePercentage\": 5,\n  \"varianceReasonCode\": \"SUPPLIER_OVER_DELIVERY\",\n  \"exceptionApprovalStatus\": \"PENDING\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/goods-receipts/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "goods-receipts",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Receipt waits for exception approval', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.validationStatus)",
+                    "        .to.eql('PENDING_EXCEPTION_APPROVAL');",
+                    "    pm.expect(response.data.approval.requiresExceptionApproval)",
+                    "        .to.eql(true);",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TC-API-GR-003 - Invalid Breakdown Rejected",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"userCode\": \"USR-WH-01\",\n  \"purchaseOrderCode\": \"PO-UAT-000001\",\n  \"productCode\": \"PRD-010\",\n  \"warehouseCode\": \"WH-001\",\n  \"batchNumber\": \"BATCH-GR-001\",\n  \"deliveredQuantity\": 1000,\n  \"acceptedQuantity\": 900,\n  \"rejectedQuantity\": 20,\n  \"damagedQuantity\": 10,\n  \"qualityBlockedQuantity\": 20,\n  \"allowedVariancePercentage\": 5,\n  \"varianceReasonCode\": null,\n  \"exceptionApprovalStatus\": \"NOT_REQUIRED\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/goods-receipts/validate",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "api",
+                  "goods-receipts",
+                  "validate"
+                ]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Invalid quantity breakdown is rejected', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "",
+                    "    const response = pm.response.json();",
+                    "    pm.expect(response.data.validationStatus).to.eql('REJECTED');",
+                    "",
+                    "    const failedCheck = response.data.checks.find(",
+                    "        check => check.code === 'QUANTITY_BREAKDOWN'",
+                    "    );",
+                    "",
+                    "    pm.expect(failedCheck.status).to.eql('FAIL');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
