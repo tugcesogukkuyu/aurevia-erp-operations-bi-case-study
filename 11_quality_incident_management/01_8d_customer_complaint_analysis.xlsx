@@ -1,0 +1,358 @@
+# AUREVIA ERP – 8D PROBLEM ÇÖZME RAPORU
+
+---
+
+## DOKÜMAN KONTROL BİLGİLERİ
+
+| Alan | Bilgi |
+|---|---|
+| Rapor No | 8D-2026-008 |
+| Rapor Tarihi | 02.08.2026 |
+| Proje | Aurevia ERP Operations & BI Case Study |
+| Modül / Süreç | Satış Siparişi Kontrolü, Stok Rezervasyonu ve Kredi Onayı |
+| Problem Kategorisi | Sistem Entegrasyonu / İş Kuralı / Veri Tabanı Performansı |
+| Öncelik | Kritik |
+| Hazırlayan | Tuğçe Soğukkuyu |
+| Rol | Proje Yöneticisi & İş Analisti |
+| Rapor Durumu | Açık – Düzeltici Faaliyet Takibinde |
+| Gizlilik Sınıfı | Portföy Vaka Çalışması |
+| Veri Türü | Sentetik Proje Verisi |
+
+---
+
+# PROBLEM BAŞLIĞI
+
+## Kampanya Döneminde Stok ve Kredi Kontrolleri Tamamlanmadan Satış Siparişlerinin Onaylanması ve Kalite Blokajlı Lotların Rezervasyona Açılması
+
+---
+
+# OLAY ÖZETİ
+
+Kampanya döneminde oluşan yüksek işlem yükü sırasında Node.js API katmanı, satış siparişi doğrulaması için çalıştırılan SQL Stored Procedure yanıtını belirlenen süre içerisinde alamamıştır.
+
+API katmanında zaman aşımı durumunda uygulanması gereken güvenli işlem kuralı bulunmadığı için bazı siparişler stok, müşteri kredi limiti, lot uygunluğu ve raf ömrü kontrolleri tamamlanmadan onaylanarak ERP sipariş sürecine aktarılmıştır.
+
+Bu durum sonucunda:
+
+- Yeterli kullanılabilir stoku bulunmayan ürünler için satış siparişleri oluşturulmuştur.
+- Kredi limiti uygun olmayan müşterilerin siparişleri onaylanmıştır.
+- Kalite blokajlı veya raf ömrü kriterini karşılamayan bazı lotlar rezervasyona açılmıştır.
+- Depo hazırlık ve sevkiyat süreçlerinde işlem blokajları oluşmuştur.
+- Bazı müşteri teslimatlarında gecikme ve sipariş revizyonu ihtiyacı meydana gelmiştir.
+- Müşteri şikâyeti riski oluşmuştur.
+
+Bu raporda kullanılan olay miktarları ve performans değerleri Aurevia vaka çalışması kapsamında oluşturulan sentetik verilerdir.
+
+---
+
+# D1 – EKİBİN OLUŞTURULMASI
+
+## 8D Çalışma Ekibi
+
+| Rol | Sorumluluk |
+|---|---|
+| Proje Yöneticisi & İş Analisti | 8D sürecinin koordinasyonu, iş kurallarının analizi, aksiyon ve doküman takibi |
+| Backend Developer | Node.js API hata yönetimi, timeout ve sipariş durum akışlarının incelenmesi |
+| Database Administrator | Stored Procedure performansı, sorgu planı, indeks ve kilitlenme analizleri |
+| ERP Sistem Sorumlusu | ERP satış siparişi, stok rezervasyonu ve kredi kontrol süreçlerinin incelenmesi |
+| Test / QA Uzmanı | Negatif senaryoların, entegrasyon testlerinin ve yük testlerinin hazırlanması |
+| Depo Operasyon Uzmanı | Lot, raf ömrü, kalite blokajı, toplama ve sevkiyat süreçlerinin değerlendirilmesi |
+| Finans Operasyon Sorumlusu | Müşteri kredi limiti ve finansal onay kurallarının doğrulanması |
+| Müşteri Hizmetleri Temsilcisi | Etkilenen müşteri bildirimleri ve şikâyet kayıtlarının takibi |
+
+## Süreç Lideri
+
+**Tuğçe Soğukkuyu – Proje Yöneticisi & İş Analisti**
+
+---
+
+# D2 – PROBLEMİN TANIMLANMASI
+
+## 5W2H Problem Tanımı
+
+| Soru | Açıklama |
+|---|---|
+| Ne oldu? | Stok, kredi, lot ve raf ömrü kontrolleri tamamlanmadan bazı satış siparişleri onaylanarak ERP sistemine aktarıldı. |
+| Nerede oldu? | Aurevia satış siparişi oluşturma sürecinde, Web Uygulaması → Node.js / Express API → SQL Stored Procedure → ERP sipariş aktarımı entegrasyon zincirinde oluştu. |
+| Ne zaman oldu? | Kampanya başlangıcında işlem hacminin en yüksek olduğu zaman aralığında meydana geldi. |
+| Kimler etkilendi? | Satış operasyonları, finans ekibi, depo çalışanları, sevkiyat operasyonu ve ilgili müşteriler etkilendi. |
+| Nasıl oluştu? | Stored Procedure yanıtı API zaman aşımı süresini geçti. API katmanı doğrulama sonucunu alamamasına rağmen sipariş işlem akışını durdurmadı. |
+| Etkisi nedir? | Hatalı sipariş onayı, yanlış stok rezervasyonu, kalite blokajlı lot riski, depo işlem blokajı, teslimat gecikmesi ve müşteri şikâyeti riski oluştu. |
+| Kapsamı nedir? | Kapsam, olay kayıtları ve SQL kontrol sorguları üzerinden doğrulanacaktır. İlk sentetik vaka kapsamında 142 sipariş incelemeye alınmıştır. |
+
+## Beklenen İş Kuralı
+
+Bir satış siparişinin onaylanabilmesi için aşağıdaki kontrollerin tamamının başarılı olması gerekir:
+
+1. Kullanılabilir stok miktarı yeterli olmalıdır.
+2. Müşteri kredi limiti sipariş tutarını karşılamalıdır.
+3. Seçilen lot kalite blokajında olmamalıdır.
+4. Lotun raf ömrü sevkiyat kriterini karşılamalıdır.
+5. Tüm kontrol sonuçları API tarafından doğrulanmış olmalıdır.
+6. Kontrol sonucu alınamayan siparişler otomatik olarak onaylanmamalıdır.
+7. Zaman aşımı veya teknik hata oluşan siparişler `PENDING_REVIEW` durumuna alınmalıdır.
+
+## Gerçekleşen Durum
+
+Stored Procedure yanıtı zaman aşımına uğradığında kontrol sonucu alınamamış ancak sipariş işlem akışı devam ederek siparişler ERP sistemine aktarılmıştır.
+
+## Problem İfadesi
+
+> Kampanya dönemindeki yüksek işlem yükü sırasında satış siparişi doğrulama Stored Procedure’ünün API zaman aşımı süresi içerisinde yanıt üretememesi ve API katmanında kontrol sonucu alınamadığında işlemi güvenli şekilde durduracak iş kuralının bulunmaması nedeniyle stok, kredi, lot ve raf ömrü kontrolleri tamamlanmamış siparişler ERP sistemine aktarılmıştır. Hata, ERP aktarımı öncesinde bağımsız bir kontrol kapısı bulunmadığı için depo ve müşteri süreçlerine ulaşmadan tespit edilememiştir.
+
+---
+
+# D3 – GEÇİCİ KORUMA EYLEMLERİ
+
+| No | Geçici Eylem | Sorumlu | Hedef Tarih | Kanıt / Kayıt | Durum |
+|---:|---|---|---|---|---|
+| 1 | Otomatik satış siparişi onay süreci geçici olarak kontrollü moda alınacaktır. | ERP Sistem Sorumlusu | 02.08.2026 | Sistem durum kaydı | Tamamlandı |
+| 2 | Timeout veya teknik hata alan siparişler `PENDING_REVIEW` durumuna alınacaktır. | Backend Developer | 02.08.2026 | API durum logu | Tamamlandı |
+| 3 | Olay zaman aralığında oluşturulan siparişler SQL kontrol sorgusu ile tespit edilecektir. | Database Administrator | 02.08.2026 | SQL sorgu çıktısı | Tamamlandı |
+| 4 | Etkilenen siparişlerin ERP onay ve sevkiyat işlemleri geçici olarak bloke edilecektir. | ERP Sistem Sorumlusu | 02.08.2026 | ERP blokaj listesi | Tamamlandı |
+| 5 | Kalite blokajlı ve raf ömrü kriterini karşılamayan lotlar rezervasyondan çıkarılacaktır. | Depo Operasyon Uzmanı | 02.08.2026 | Lot kontrol listesi | Tamamlandı |
+| 6 | Kredi kontrol sonucu bulunmayan siparişler finans ekibinin manuel incelemesine yönlendirilecektir. | Finans Operasyon Sorumlusu | 02.08.2026 | Finans kontrol listesi | Tamamlandı |
+| 7 | Etkilenen müşterilerin teslimat durumu kontrol edilerek gerekli bilgilendirme yapılacaktır. | Müşteri Hizmetleri Temsilcisi | 03.08.2026 | Müşteri iletişim kaydı | Devam Ediyor |
+| 8 | Kampanya süresince kritik API ve SQL süreleri operasyon ekibi tarafından izlenecektir. | Backend Developer / DBA | 03.08.2026 | İzleme ekranı / log kaydı | Devam Ediyor |
+
+## Geçici Koruma Kriteri
+
+Aşağıdaki kontrollerden herhangi biri tamamlanmamışsa sipariş sevkiyata açılamaz:
+
+- Stok kontrolü
+- Kredi limiti kontrolü
+- Lot uygunluk kontrolü
+- Raf ömrü kontrolü
+- Kalite blokaj kontrolü
+- API doğrulama sonucu
+
+---
+
+# D4 – KÖK NEDEN ANALİZİ
+
+## 4.1 Oluşum Kök Nedeni
+
+### Problem
+
+Stok, kredi, lot ve raf ömrü kontrolleri tamamlanmadan satış siparişlerinin onaylanması.
+
+### 5 Neden Analizi
+
+| Neden Seviyesi | Soru | Cevap |
+|---:|---|---|
+| 1 | Sipariş neden hatalı şekilde onaylandı? | API, doğrulama Stored Procedure’ünden kesin bir başarı sonucu almadan sipariş işlem akışını devam ettirdi. |
+| 2 | API neden doğrulama sonucu olmadan işlem akışını devam ettirdi? | Timeout ve teknik hata durumları için siparişi durduracak zorunlu bir `fail-closed` iş kuralı tanımlanmamıştı. |
+| 3 | Bu iş kuralı neden tanımlanmamıştı? | Satış siparişi gereksinimlerinde yalnızca başarılı ve iş kuralı reddi senaryoları tanımlanmış, teknik hata ve zaman aşımı senaryoları eksik bırakılmıştı. |
+| 4 | Teknik hata senaryoları neden eksik bırakılmıştı? | Kabul kriterleri ve test senaryosu şablonunda exception handling, timeout ve servis erişilememe kontrolleri zorunlu alan olarak yer almıyordu. |
+| 5 | Bu eksiklik neden geliştirme ve test aşamasında tespit edilmedi? | Entegrasyon testleri ağırlıklı olarak normal işlem akışına odaklanmış, yüksek eşzamanlılık ve negatif teknik senaryolar yeterli kapsamda test edilmemişti. |
+
+### Doğrulanan Oluşum Kök Nedeni
+
+> Satış siparişi analiz ve kabul kriterlerinde timeout, servis hatası ve doğrulama sonucunun alınamaması durumunda uygulanacak zorunlu güvenli işlem kuralının tanımlanmamış olması nedeniyle API katmanı siparişi durdurmamış ve kontrol tamamlanmadan ERP aktarımı gerçekleşmiştir.
+
+---
+
+## 4.2 Teknik Performans Nedeni
+
+### Problem
+
+Satış siparişi doğrulama Stored Procedure’ünün kampanya yükü altında API zaman aşımı süresini aşması.
+
+### İncelenecek Teknik Unsurlar
+
+| İnceleme Alanı | Kanıt |
+|---|---|
+| Stored Procedure çalışma süresi | SQL süre ölçümü |
+| Execution Plan | SQL execution plan çıktısı |
+| İndeks kullanımı | İndeks kullanım raporu |
+| Lot ve raf ömrü sorguları | Sorgu analiz çıktısı |
+| Kredi kontrol sorgusu | Sorgu analiz çıktısı |
+| Blocking / Lock durumu | SQL oturum ve bekleme kayıtları |
+| Eşzamanlı işlem sayısı | Yük testi raporu |
+| API timeout kayıtları | API uygulama logu |
+
+### Teknik Neden Değerlendirmesi
+
+İlk teknik incelemede lot, stok, raf ömrü ve kredi kontrollerinin aynı Stored Procedure içinde yüksek hacimli tablolar üzerinde çalıştığı görülmüştür.
+
+Sorgu performansının aşağıdaki nedenlerin birleşiminden etkilenmiş olabileceği değerlendirilmiştir:
+
+- Lot ve raf ömrü sorgularında uygun indekslerin bulunmaması
+- Yüksek eşzamanlı işlem sayısı
+- Aynı stok kayıtları üzerinde kilitlenme veya bekleme oluşması
+- Gereğinden fazla veri döndüren sorgular
+- API timeout süresi ile gerçek işlem süresinin uyumsuzluğu
+
+Kesin teknik kök neden, execution plan ve yük testi sonuçları ile doğrulanacaktır.
+
+---
+
+## 4.3 Kaçış Kök Nedeni
+
+### Problem
+
+Hatalı siparişlerin ERP aktarımı ve depo sürecinden önce tespit edilememesi.
+
+### 5 Neden Analizi
+
+| Neden Seviyesi | Soru | Cevap |
+|---:|---|---|
+| 1 | Hatalı sipariş neden ERP sistemine ulaştı? | ERP aktarımı öncesinde tüm kontrol sonuçlarının başarılı olduğunu doğrulayan bağımsız bir kontrol kapısı bulunmuyordu. |
+| 2 | Kontrol kapısı neden bulunmuyordu? | API tarafından oluşturulan onay durumu ERP aktarımı için yeterli kabul ediliyordu. |
+| 3 | API onay durumu neden tek başına yeterli kabul ediliyordu? | Stok, kredi, lot ve raf ömrü kontrol sonuçları ayrı ve zorunlu durum alanları olarak saklanmıyordu. |
+| 4 | Kontrol sonuçları neden ayrı saklanmıyordu? | Veri modeli ve entegrasyon tasarımında doğrulama adımlarının denetlenebilir kayıtları tanımlanmamıştı. |
+| 5 | Bu eksiklik neden testlerde bulunmadı? | UAT ve entegrasyon testlerinde hata yanıtı, eksik doğrulama sonucu ve kısmi işlem senaryoları bulunmuyordu. |
+
+### Doğrulanan Kaçış Kök Nedeni
+
+> ERP aktarımı öncesinde stok, kredi, lot ve raf ömrü kontrollerinin ayrı ayrı tamamlandığını doğrulayan zorunlu bir kontrol kapısının ve denetlenebilir doğrulama kayıtlarının bulunmaması nedeniyle hatalı siparişler depo ve müşteri süreçlerine ulaşmadan tespit edilememiştir.
+
+---
+
+# D5 – KALICI DÜZELTİCİ EYLEMLERİN SEÇİLMESİ
+
+| No | Alan | Kalıcı Düzeltici Eylem | Sorumlu | Öncelik | Hedef Tarih | Durum |
+|---:|---|---|---|---|---|---|
+| 1 | API | Timeout, bağlantı hatası veya doğrulama sonucu alınamaması durumunda siparişin otomatik olarak `PENDING_REVIEW` durumuna alınması | Backend Developer | Kritik | 07.08.2026 | Planlandı |
+| 2 | API | Kontrol sonucu bulunmadan `APPROVED` durumuna geçişi engelleyen durum yönetimi uygulanması | Backend Developer | Kritik | 07.08.2026 | Planlandı |
+| 3 | API | Aynı siparişin tekrar gönderilmesi durumunda mükerrer kayıt oluşmasını engelleyen idempotency kontrolü eklenmesi | Backend Developer | Yüksek | 10.08.2026 | Planlandı |
+| 4 | Entegrasyon | ERP aktarımı öncesinde stok, kredi, lot, raf ömrü ve kalite blokaj kontrollerini doğrulayan zorunlu kontrol kapısı oluşturulması | Backend Developer / ERP Sistem Sorumlusu | Kritik | 10.08.2026 | Planlandı |
+| 5 | Veri Tabanı | Stored Procedure execution plan analizinin gerçekleştirilmesi | Database Administrator | Kritik | 05.08.2026 | Planlandı |
+| 6 | Veri Tabanı | Doğrulanan sorgu ihtiyacına göre uygun composite ve covering indekslerin oluşturulması | Database Administrator | Yüksek | 07.08.2026 | Planlandı |
+| 7 | Veri Tabanı | Lot, raf ömrü, kullanılabilir stok ve kredi kontrollerinin sorgu performansı açısından optimize edilmesi | Database Administrator | Yüksek | 10.08.2026 | Planlandı |
+| 8 | Veri Modeli | Her doğrulama sonucu için ayrı durum, tarih, hata kodu ve açıklama alanlarının oluşturulması | Business Analyst / DBA | Yüksek | 10.08.2026 | Planlandı |
+| 9 | İzleme | API timeout, SQL işlem süresi ve hatalı sipariş durumları için log ve alarm mekanizması kurulması | Backend Developer / DBA | Yüksek | 12.08.2026 | Planlandı |
+| 10 | Analiz | Gereksinim dokümanına sistem hatası ve exception handling matrisi eklenmesi | Business Analyst | Kritik | 05.08.2026 | Planlandı |
+| 11 | Test | Timeout, servis erişilememe, kısmi doğrulama ve yüksek yük senaryolarının test kapsamına eklenmesi | QA Uzmanı | Kritik | 12.08.2026 | Planlandı |
+| 12 | Operasyon | Kalite blokajlı ve raf ömrü uygun olmayan lotların sipariş rezervasyonuna kapatılması | ERP Sistem Sorumlusu / Depo Operasyon Uzmanı | Kritik | 07.08.2026 | Planlandı |
+
+## Düzeltici Faaliyet Seçim Kriterleri
+
+Seçilen faaliyetler aşağıdaki koşulları karşılamalıdır:
+
+- Kontrol sonucu bulunmadan sipariş onaylanamamalıdır.
+- Teknik hata, iş kuralı başarısı olarak değerlendirilememelidir.
+- Her doğrulama sonucu ayrı olarak izlenebilmelidir.
+- ERP aktarımı yalnızca bütün zorunlu kontroller başarılı olduğunda yapılmalıdır.
+- Aynı sipariş tekrar işlendiğinde mükerrer kayıt oluşmamalıdır.
+- Kalite blokajlı ve raf ömrü uygun olmayan lotlar sistemsel olarak engellenmelidir.
+- Sistem hataları loglanmalı ve operasyon ekibine bildirilmelidir.
+
+---
+
+# D6 – UYGULAMA VE DOĞRULAMA PLANI
+
+| No | Doğrulama Testi | Beklenen Sonuç | Kanıt | Sonuç | Durum |
+|---:|---|---|---|---|---|
+| 1 | Stored Procedure timeout testi | Sipariş `PENDING_REVIEW` durumuna alınmalı, ERP’ye aktarılmamalı | API logu ve veri tabanı kaydı | Test edilecek | Açık |
+| 2 | SQL bağlantı hatası testi | Sipariş onaylanmamalı ve hata kodu kaydedilmeli | API hata kaydı | Test edilecek | Açık |
+| 3 | Yetersiz stok testi | Sipariş reddedilmeli veya manuel incelemeye alınmalı | Test sonucu | Test edilecek | Açık |
+| 4 | Kredi limiti yetersizliği testi | Sipariş finans onayına yönlendirilmeli | Sipariş durum kaydı | Test edilecek | Açık |
+| 5 | Kalite blokajlı lot testi | Lot rezervasyona alınmamalı | Lot rezervasyon kaydı | Test edilecek | Açık |
+| 6 | Raf ömrü uygun olmayan lot testi | Lot satışa ve sevkiyata kapatılmalı | Lot uygunluk kaydı | Test edilecek | Açık |
+| 7 | Mükerrer istek testi | Aynı sipariş için ikinci ERP kaydı oluşmamalı | ERP ve API kayıtları | Test edilecek | Açık |
+| 8 | Eşzamanlı yük testi | Kritik hata oranı kabul edilen sınır içinde kalmalı | Yük testi raporu | Test edilecek | Açık |
+| 9 | ERP kontrol kapısı testi | Eksik doğrulama sonucu bulunan sipariş ERP’ye geçmemeli | Entegrasyon test sonucu | Test edilecek | Açık |
+| 10 | Regresyon testi | Mevcut başarılı sipariş akışları etkilenmemeli | Regresyon test raporu | Test edilecek | Açık |
+
+## Doğrulama Başarı Kriterleri
+
+| Gösterge | Hedef |
+|---|---:|
+| Kontrol sonucu olmadan onaylanan sipariş | 0 |
+| Kalite blokajlı lot rezervasyonu | 0 |
+| Raf ömrü uygun olmayan lot rezervasyonu | 0 |
+| Kredi kontrolü olmadan ERP aktarımı | 0 |
+| Mükerrer sipariş kaydı | 0 |
+| Kritik API hatalarının loglanma oranı | %100 |
+| Timeout durumunda güvenli statüye alınma oranı | %100 |
+| Açık kritik hata sayısı | 0 |
+| Başarılı regresyon test oranı | %100 |
+
+---
+
+# D7 – TEKRARLANMAYI ÖNLEYİCİ FAALİYETLER
+
+| No | Önleyici Faaliyet | Sorumlu | Kanıt | Durum |
+|---:|---|---|---|---|
+| 1 | Gereksinim ve kabul kriteri şablonuna timeout, teknik hata, servis erişilememe ve kısmi işlem alanlarının eklenmesi | Business Analyst | Güncel gereksinim şablonu | Planlandı |
+| 2 | Kritik entegrasyonlarda `fail-closed` yaklaşımının zorunlu mimari standart olarak tanımlanması | Teknik Ekip | Teknik standart dokümanı | Planlandı |
+| 3 | UAT test senaryolarına negatif sistem senaryolarının eklenmesi | QA Uzmanı / Business Analyst | UAT test seti | Planlandı |
+| 4 | Kampanya ve yoğun işlem dönemlerinden önce yük testi yapılması | QA Uzmanı | Yük testi raporu | Planlandı |
+| 5 | Stored Procedure performans kontrol listesinin oluşturulması | Database Administrator | DB kontrol listesi | Planlandı |
+| 6 | Kritik API çağrıları için merkezi log ve alarm standardının uygulanması | Backend Developer | İzleme ve alarm kaydı | Planlandı |
+| 7 | Stok, kredi, lot ve raf ömrü kontrollerinin denetlenebilir kayıtlar olarak saklanması | Backend Developer / DBA | Veri tabanı kayıtları | Planlandı |
+| 8 | Kalite blokajlı lotların satış ve rezervasyon süreçlerinde sistemsel olarak engellenmesi | ERP Sistem Sorumlusu | ERP kural kaydı | Planlandı |
+| 9 | Yeni sürümlerde ilgili hata senaryolarının regresyon test paketinde tutulması | QA Uzmanı | Regresyon test paketi | Planlandı |
+| 10 | Kritik sipariş ve entegrasyon KPI’larının Power BI operasyon ekranında izlenmesi | Data / BI Analyst | Dashboard ekranı | Planlandı |
+
+---
+
+# D8 – ETKİNLİK KONTROLÜ VE KAPANIŞ
+
+## Kapanış Kriterleri
+
+8D raporu aşağıdaki koşullar sağlanmadan kapatılamaz:
+
+- Tüm kritik düzeltici faaliyetlerin tamamlanması
+- Timeout durumunda siparişin ERP’ye geçmediğinin doğrulanması
+- Kalite blokajlı lot rezervasyonunun engellendiğinin doğrulanması
+- Kredi kontrolü tamamlanmadan sipariş onaylanmadığının doğrulanması
+- Yük ve regresyon testlerinin başarıyla tamamlanması
+- Kritik seviyede açık hata kalmaması
+- Belirlenen izleme dönemi boyunca aynı hatanın tekrarlanmaması
+- Süreç sahibi ve teknik sorumlunun kapanış onayı vermesi
+
+## Etkinlik İzleme Tablosu
+
+| Gösterge | Başlangıç Değeri | Hedef | İzleme Sonucu | Durum |
+|---|---:|---:|---:|---|
+| Kontrolsüz onaylanan sipariş sayısı | Sentetik olayda 142 | 0 | İzlenecek | Açık |
+| Kalite blokajlı lot rezervasyonu | Belirlenecek | 0 | İzlenecek | Açık |
+| Timeout sonrası ERP aktarımı | Belirlenecek | 0 | İzlenecek | Açık |
+| Mükerrer sipariş kaydı | Belirlenecek | 0 | İzlenecek | Açık |
+| Kritik müşteri şikâyeti | Belirlenecek | 0 | İzlenecek | Açık |
+| Zamanında kapatılan düzeltici faaliyet oranı | Belirlenecek | %100 | İzlenecek | Açık |
+
+## Kapanış Bilgileri
+
+| Alan | Bilgi |
+|---|---|
+| Etkinlik İzleme Başlangıcı | Düzeltici faaliyetlerin canlıya alınmasından sonra |
+| Etkinlik İzleme Süresi | 30 gün |
+| Kapanış Tarihi | Belirlenecek |
+| Rapor Durumu | Açık |
+| Açık Kritik Aksiyon | Takip edilecek |
+| Süreç Sahibi Onayı | Bekleniyor |
+| Teknik Sorumlu Onayı | Bekleniyor |
+| Proje Yöneticisi Onayı | Bekleniyor |
+
+---
+
+# KANIT VE EK DOKÜMAN ENVANTERİ
+
+| Ek No | Doküman / Kanıt | Referans | Durum |
+|---:|---|---|---|
+| EK-01 | 8D Problem Çözme Raporu | `01_8d_problem_solving_report.md` 
+| EK-02 | Balık Kılçığı Kök Neden Analizi | `02_fishbone_root_cause_analysis.md` 
+| EK-03 | Satış Siparişi Kontrol Gereksinimi | `sales_order_control_spec.md` 
+| EK-04 | Kök Neden ve Düzeltici Faaliyet Kanıtları | 8D raporu D4–D7 bölümleri | Vaka Çalışması Kapsamında |
+---
+
+# ONAY TABLOSU
+
+| Rol | Ad Soyad | Karar | Tarih | İmza |
+|---|---|---|---|---|
+| Hazırlayan | Tuğçe Soğukkuyu | Hazırlandı | 02.08.2026 |  |
+| Süreç Sahibi |  | Bekleniyor |  |  |
+| Teknik Sorumlu |  | Bekleniyor |  |  |
+| Test Sorumlusu |  | Bekleniyor |  |  |
+| Operasyon Sorumlusu |  | Bekleniyor |  |  |
+
+---
+
+## REVİZYON GEÇMİŞİ
+
+| Revizyon | Tarih | Değişiklik Açıklaması | Hazırlayan |
+|---|---|---|---|
+| 1.0 | 02.08.2026 | İlk 8D raporu oluşturuldu. | Tuğçe Soğukkuyu |

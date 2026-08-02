@@ -1,0 +1,232 @@
+# AUREVIA ERP – BALIK KILÇIĞI KÖK NEDEN ANALİZİ
+
+---
+
+## DOKÜMAN KONTROL BİLGİLERİ
+
+| Alan | Bilgi |
+|---|---|
+| Doküman No | RCA-2026-008 |
+| Tarih | 02.08.2026 |
+| Proje | Aurevia ERP Operations & BI Case Study |
+| Modül / Süreç | Satış Siparişi Kontrolü, Stok Rezervasyonu ve Kredi Onayı |
+| Analiz Yöntemi | Balık Kılçığı – Ishikawa Diyagramı |
+| İlgili 8D Raporu | 8D-2026-008 |
+| Hazırlayan | Tuğçe Soğukkuyu |
+| Rol | Proje Yöneticisi & İş Analisti |
+| Veri Türü | Sentetik Proje Verisi |
+| Doküman Durumu | Tamamlandı |
+
+---
+
+# ANALİZ EDİLEN PROBLEM
+
+> Kampanya dönemindeki yüksek işlem yükü sırasında stok, kredi, lot, raf ömrü ve kalite blokaj kontrolleri tamamlanmadan bazı satış siparişlerinin onaylanarak ERP sistemine aktarılması ve hatalı siparişlerin depo operasyonuna ulaşmadan tespit edilememesi.
+
+---
+
+# BALIK KILÇIĞI DİYAGRAMI
+
+```text
+İNSAN / EKİP                              METOT / SÜREÇ
+────────────────────────                  ─────────────────────────
+• Teknik hata senaryolarının              • Timeout sürecinin iş akışında
+  analizde eksik bırakılması                tanımlanmaması
+• Ekipler arası kontrol                   • Fail-closed kuralının bulunmaması
+  sorumluluklarının net olmaması          • ERP öncesi kontrol kapısı olmaması
+• Operasyon ekiplerinin sistem            • Negatif senaryoların UAT kapsamına
+  hatalarına hazırlıksız olması              alınmaması
+                       \                    /
+                        \                  /
+                         \                /
+                          \              /
+                           \            /
+                            \          /
+                             \        /
+                              \      /
+                               \    /
+                                \  /
+                                 \/
+                                  ───────────────────────────────►
+                                  HATALI SATIŞ SİPARİŞLERİNİN
+                                  ERP SİSTEMİNE AKTARILMASI VE
+                                  KALİTE BLOKAJLI LOTLARIN
+                                  REZERVASYON RİSKİ
+                                 /\
+                                /  \
+                               /    \
+                              /      \
+                             /        \
+                            /          \
+                           /            \
+                          /              \
+                         /                \
+                        /                  \
+                       /                    \
+
+UYGULAMA / API                            VERİ TABANI
+────────────────────────                  ─────────────────────────
+• Timeout durumunda sipariş               • Stored Procedure çalışma
+  akışının devam etmesi                      süresinin yük altında artması
+• Kontrol sonucu olmadan                  • Lot ve raf ömrü sorgularında
+  APPROVED durumuna geçilmesi                performans riski
+• Hata kodlarının standart                • İndekslerin sorgu ihtiyacını
+  biçimde saklanmaması                       karşılamama ihtimali
+• İdempotency kontrolünün                 • Eşzamanlı işlemlerde bekleme
+  bulunmaması                                veya kilitlenme riski
+
+
+VERİ / İŞ KURALLARI                       ÖLÇÜM / İZLEME
+────────────────────────                  ─────────────────────────
+• Stok, kredi ve lot kontrol              • API yanıt süreleri için alarm
+  sonuçlarının ayrı saklanmaması             bulunmaması
+• Kontrol sonucu eksikken                 • SQL işlem sürelerinin düzenli
+  sipariş onayının engellenmemesi            izlenmemesi
+• Kalite blokajlı lotların                • Timeout sayılarının
+  rezervasyona kapatılmaması                 raporlanmaması
+• Raf ömrü kontrolünün zorunlu            • Kampanya öncesi yük testi
+  onay koşulu olmaması                       yapılmaması
+```
+
+---
+
+# NEDEN KATEGORİLERİ
+
+## 1. İnsan / Ekip
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 1.1 | İş analizi sırasında timeout ve servis hatası senaryolarının eksik tanımlanması | Güvenli hata yönetimi kabul kriterlerine eklenmemiştir. | Doğrulandı |
+| 1.2 | Teknik ekip, test ekibi ve operasyon arasındaki kontrol sorumluluklarının açık biçimde tanımlanmaması | Kontrol sonucunun hangi katmanda zorunlu olarak doğrulanacağı netleştirilmemiştir. | Katkıda Bulunan Neden |
+| 1.3 | Depo ve finans ekipleri için teknik hata durumlarında uygulanacak manuel kontrol prosedürünün bulunmaması | Olayın operasyonel etkisinin büyümesine neden olmuştur. | Katkıda Bulunan Neden |
+| 1.4 | Kullanıcı hatası | Problem kullanıcı işlemi nedeniyle değil, sistemsel işlem akışı sırasında oluşmuştur. | Elendi |
+
+---
+
+## 2. Metot / Süreç
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 2.1 | Timeout durumunda uygulanacak iş akışının tanımlanmamış olması | Kontrol sonucu alınamadığında siparişin hangi duruma geçirileceği belirlenmemiştir. | Doğrulandı |
+| 2.2 | Fail-closed yaklaşımının zorunlu süreç kuralı olmaması | Sistem teknik hata durumunda işlemi güvenli biçimde durdurmamıştır. | Doğrulandı |
+| 2.3 | ERP aktarımı öncesinde bağımsız doğrulama kapısının bulunmaması | Eksik kontrol sonucu bulunan sipariş ERP sistemine geçebilmiştir. | Doğrulandı |
+| 2.4 | Negatif entegrasyon senaryolarının UAT kapsamına alınmaması | Testler ağırlıklı olarak başarılı işlem akışlarına odaklanmıştır. | Doğrulandı |
+| 2.5 | Kampanya öncesi operasyonel hazırlık kontrol listesinin bulunmaması | Yoğun işlem dönemlerindeki teknik ve operasyonel riskler sistematik olarak değerlendirilmemiştir. | Katkıda Bulunan Neden |
+
+---
+
+## 3. Uygulama / API
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 3.1 | Stored Procedure yanıtı alınmadan sipariş akışının devam etmesi | Doğrulama sonucu alınamamasına rağmen sipariş ERP aktarımına yönlendirilmiştir. | Doğrulandı |
+| 3.2 | Timeout durumunun başarılı doğrulama sonucundan ayrıştırılmaması | Teknik hata ile başarılı kontrol sonucu aynı işlem akışında değerlendirilmiştir. | Doğrulandı |
+| 3.3 | Kontrol sonucu bulunmadan `APPROVED` durumuna geçişin mümkün olması | Sipariş durum yönetiminde zorunlu doğrulama koşulları eksiktir. | Doğrulandı |
+| 3.4 | Standart hata kodu ve hata açıklaması yapısının bulunmaması | Sorunun izlenebilirliğini ve olay analizini zorlaştırmıştır. | Katkıda Bulunan Neden |
+| 3.5 | Mükerrer istekleri önleyen idempotency kontrolünün bulunmaması | Timeout sonrasında tekrar gönderilen isteklerde mükerrer kayıt riski oluşturmuştur. | Risk |
+| 3.6 | Circuit breaker veya eşdeğer servis koruma mekanizmasının bulunmaması | Yoğun hata durumunda sistem kaynaklarının korunmasını zorlaştırmıştır. | İyileştirme Alanı |
+
+---
+
+## 4. Veri Tabanı
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 4.1 | Stored Procedure çalışma süresinin kampanya yükü altında artması | API zaman aşımını tetikleyen teknik durumdur. | Doğrulandı |
+| 4.2 | Lot, stok ve raf ömrü sorgularında indeks yetersizliği | Execution plan ve indeks analiziyle doğrulanması gerekir. | İncelenecek |
+| 4.3 | Aynı stok kayıtları üzerinde kilitlenme veya bekleme oluşması | Eşzamanlı işlem yoğunluğunda sorgu süresini artırmış olabilir. | İncelenecek |
+| 4.4 | Stored Procedure içinde gereğinden fazla veri işlenmesi | Sorgu çalışma süresine katkıda bulunmuş olabilir. | İncelenecek |
+| 4.5 | Kredi, stok ve lot kontrollerinin aynı işlem içinde uzun süre açık kalması | İşlem süresini ve kilitlenme riskini artırmış olabilir. | İncelenecek |
+| 4.6 | Veri tabanı bağlantısının tamamen kesilmesi | Mevcut olay senaryosunda ana neden olarak belirlenmemiştir. | Elendi |
+
+---
+
+## 5. Veri / İş Kuralları
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 5.1 | Stok, kredi, lot ve raf ömrü kontrol sonuçlarının ayrı alanlarda saklanmaması | Kontrollerin tamamlanıp tamamlanmadığı bağımsız olarak doğrulanamamıştır. | Doğrulandı |
+| 5.2 | Eksik kontrol sonucu bulunan siparişin onaylanabilmesi | Veri modeli sipariş onayını bütün doğrulama sonuçlarına bağlamamıştır. | Doğrulandı |
+| 5.3 | Kalite blokajlı lotların rezervasyona sistemsel olarak kapatılmaması | Uygun olmayan lotların siparişe bağlanması riskini oluşturmuştur. | Doğrulandı |
+| 5.4 | Raf ömrü kontrolünün zorunlu satış kriteri olmaması | Raf ömrü uygun olmayan lotların rezervasyon riskini artırmıştır. | Doğrulandı |
+| 5.5 | Kredi kontrol sonucunun zorunlu sipariş onay koşulu olmaması | Kredi kontrolü tamamlanmadan işlem akışının ilerlemesine neden olmuştur. | Doğrulandı |
+| 5.6 | Ürün veya müşteri ana verisinin hatalı olması | Problem ana veri hatasından değil, yoğunluk ve doğrulama akışından kaynaklanmıştır. | Elendi |
+
+---
+
+## 6. Ölçüm / İzleme
+
+| No | Olası Neden | Değerlendirme | Durum |
+|---:|---|---|---|
+| 6.1 | API yanıt süresi ve timeout sayısı için alarm bulunmaması | Sorunun erken tespit edilmesini engellemiştir. | Doğrulandı |
+| 6.2 | Stored Procedure işlem sürelerinin düzenli olarak izlenmemesi | Performans bozulması kampanya öncesinde tespit edilememiştir. | Katkıda Bulunan Neden |
+| 6.3 | Kampanya öncesinde eşzamanlı yük testi yapılmaması | Gerçek trafik koşulları test ortamında doğrulanmamıştır. | Doğrulandı |
+| 6.4 | Kontrolsüz onaylanan siparişler için KPI bulunmaması | Hata, depo veya müşteri etkisi meydana geldikten sonra görünür hâle gelmiştir. | Katkıda Bulunan Neden |
+| 6.5 | Kalite blokajlı lot rezervasyonlarının raporlanmaması | Lot uygunluk problemlerinin erken tespit edilmesini zorlaştırmıştır. | Katkıda Bulunan Neden |
+| 6.6 | Sistem performansının hiç ölçülmemesi | Temel log kayıtlarının bulunduğu ancak alarm ve raporlama kapsamının yetersiz olduğu kabul edilmiştir. | Kısmen Elendi |
+
+---
+
+# DOĞRULANAN ANA KÖK NEDENLER
+
+| Kök Neden Türü | Doğrulanan Kök Neden |
+|---|---|
+| Oluşum Kök Nedeni | Timeout veya teknik hata durumunda siparişi güvenli biçimde durduracak fail-closed iş kuralının analiz, geliştirme ve kabul kriterlerinde tanımlanmamış olması |
+| Teknik Tetikleyici | Satış siparişi doğrulama Stored Procedure’ünün kampanya yükü altında API zaman aşımı süresi içerisinde yanıt verememesi |
+| Kaçış Kök Nedeni | ERP aktarımı öncesinde stok, kredi, lot, raf ömrü ve kalite blokaj kontrollerinin tamamlandığını doğrulayan bağımsız ve zorunlu bir kontrol kapısının bulunmaması |
+| Sistemik Neden | Negatif entegrasyon, timeout ve yüksek eşzamanlılık senaryolarının test ve izleme standartlarında zorunlu hâle getirilmemiş olması |
+
+---
+
+# ÖNCELİKLENDİRİLMİŞ NEDENLER
+
+| Öncelik | Neden | Etki | İlgili 8D Aksiyonu |
+|---:|---|---|---|
+| 1 | Timeout durumunda siparişin durdurulmaması | Kontrolsüz sipariş onayı | D5-1 ve D5-2 |
+| 2 | ERP öncesi zorunlu kontrol kapısının bulunmaması | Hatalı siparişin depo sürecine ulaşması | D5-4 |
+| 3 | Kontrol sonuçlarının ayrı ve denetlenebilir biçimde saklanmaması | Eksik doğrulamanın tespit edilememesi | D5-8 |
+| 4 | Stored Procedure performans riski | API zaman aşımı | D5-5, D5-6 ve D5-7 |
+| 5 | Yük ve negatif senaryo testlerinin eksik olması | Hatanın canlı öncesinde bulunamaması | D5-10 ve D5-11 |
+| 6 | API ve SQL izleme alarmının bulunmaması | Olayın geç fark edilmesi | D5-9 |
+| 7 | Kalite blokajlı lotların sistemsel olarak engellenmemesi | Uygun olmayan lot rezervasyonu | D5-12 |
+
+---
+
+# ANALİZ SONUCU
+
+Balık kılçığı analizi sonucunda problemin yalnızca veri tabanı sorgusunun yavaşlamasından kaynaklanmadığı belirlenmiştir.
+
+Stored Procedure zaman aşımı olayın teknik tetikleyicisidir. Hatalı satış siparişlerinin oluşmasına neden olan temel eksiklik, teknik hata durumunda işlem akışını güvenli biçimde durduracak zorunlu iş kuralının bulunmamasıdır.
+
+Hatanın ERP ve depo süreçlerine ulaşmasının temel nedeni ise stok, kredi, lot, raf ömrü ve kalite blokaj kontrollerinin tamamlandığını bağımsız olarak doğrulayan zorunlu bir entegrasyon kontrol kapısının bulunmamasıdır.
+
+Bu nedenle düzeltici faaliyetler yalnızca SQL performans iyileştirmesiyle sınırlandırılmamış; API durum yönetimi, iş kuralları, veri modeli, test kapsamı, izleme ve operasyon kontrollerini kapsayacak şekilde belirlenmiştir.
+
+---
+
+# İLGİLİ DOKÜMANLAR
+
+| Doküman | Referans |
+|---|---|
+| 8D Problem Çözme Raporu | `01_8d_problem_solving_report.md` |
+| Satış Siparişi Kontrol Gereksinimi | `sales_order_control_spec.md` |
+| Balık Kılçığı Kök Neden Analizi | `02_fishbone_root_cause_analysis.md` |
+
+---
+
+# ONAY TABLOSU
+
+| Rol | Ad Soyad | Karar | Tarih | İmza |
+|---|---|---|---|---|
+| Hazırlayan | Tuğçe Soğukkuyu | Hazırlandı | 02.08.2026 |  |
+| Süreç Sahibi |  | Bekleniyor |  |  |
+| Teknik Sorumlu |  | Bekleniyor |  |  |
+| Test Sorumlusu |  | Bekleniyor |  |  |
+
+---
+
+# REVİZYON GEÇMİŞİ
+
+| Revizyon | Tarih | Değişiklik Açıklaması | Hazırlayan |
+|---|---|---|---|
+| 1.0 | 02.08.2026 | İlk balık kılçığı kök neden analizi oluşturuldu. | Tuğçe Soğukkuyu |
